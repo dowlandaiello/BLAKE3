@@ -1200,6 +1200,29 @@ impl std::io::Write for Hasher {
     }
 }
 
+#[cfg(feature = "std")]
+impl std::hash::Hasher for Hasher {
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {
+        self.update(bytes);
+    }
+
+    #[inline]
+    fn finish(&self) -> u64 {
+        let mut output_bytes_sum = 0;
+
+        self.finalize()
+            .as_bytes()
+            .into_iter()
+            .map(|output_byte| {
+                output_bytes_sum = output_bytes_sum << 4 | *output_byte as u64;
+                output_bytes_sum
+            })
+            .last()
+            .unwrap_or_default()
+    }
+}
+
 /// An incremental reader for extended output, returned by
 /// [`Hasher::finalize_xof`](struct.Hasher.html#method.finalize_xof).
 #[derive(Clone)]
